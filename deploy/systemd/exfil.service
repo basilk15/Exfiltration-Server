@@ -1,0 +1,23 @@
+[Unit]
+Description=Data Exfiltration Server (Flask)
+After=network.target
+
+[Service]
+Type=simple
+User=exfil
+Group=exfil
+WorkingDirectory=/opt/exfil/server
+EnvironmentFile=/etc/default/exfil
+ExecStart=/usr/bin/python3 app.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
+
