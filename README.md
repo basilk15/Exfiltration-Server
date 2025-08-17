@@ -246,12 +246,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This tool is intended for authorized security testing only. Users are responsible for complying with all applicable laws and regulations. The authors assume no liability for misuse of this software.
 
----
 
-<div align="center">
-
-**⭐ Star this repo if you find it useful!**
-
-Made with ❤️ for the security community
-
-</div>
